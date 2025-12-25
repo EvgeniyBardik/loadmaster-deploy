@@ -1,0 +1,29 @@
+name: Deploy Worker
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Clone Worker
+        run: git clone https://github.com/YOUR_USERNAME/loadmaster-worker.git
+      
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      
+      - name: Build
+        run: cd loadmaster-worker && cargo build --release
+      
+      - name: Build Docker image
+        run: cd loadmaster-worker && docker build -t loadmaster-worker:latest .
+      
+      # Add deployment steps here

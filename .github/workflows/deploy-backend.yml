@@ -1,0 +1,32 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Clone Backend
+        run: git clone https://github.com/YOUR_USERNAME/loadmaster-api.git
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+      
+      - name: Install dependencies
+        run: cd loadmaster-api && npm ci
+      
+      - name: Build
+        run: cd loadmaster-api && npm run build
+      
+      - name: Build Docker image
+        run: cd loadmaster-api && docker build -t loadmaster-api:latest .
+      
+      # Add deployment steps here
