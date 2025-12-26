@@ -65,8 +65,19 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
       
-      - name: Trigger deployment
+      - name: Check deploy token
+        id: check_token
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          if [ -z "${{ secrets.DEPLOY_TOKEN }}" ]; then
+            echo "⚠️ DEPLOY_TOKEN not set. Automatic deployment will be skipped."
+            echo "token_available=false" >> $GITHUB_OUTPUT
+          else
+            echo "token_available=true" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Trigger deployment
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.check_token.outputs.token_available == 'true'
         uses: peter-evans/repository-dispatch@v2
         with:
           token: ${{ secrets.DEPLOY_TOKEN }}
