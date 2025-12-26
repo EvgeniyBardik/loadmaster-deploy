@@ -13,13 +13,17 @@ spec:
       labels:
         app: worker
     spec:
+      initContainers:
+      - name: wait-for-rabbitmq
+        image: busybox:1.35
+        command: ['sh', '-c', 'until nslookup rabbitmq.loadmaster.svc.cluster.local; do echo waiting for rabbitmq; sleep 2; done;']
       containers:
       - name: worker
         image: ghcr.io/evgeniybardik/loadmaster-worker:latest
         imagePullPolicy: Always
         env:
         - name: RABBITMQ_URL
-          value: "amqp://guest:guest@rabbitmq:5672"
+          value: "amqp://guest:guest@rabbitmq.loadmaster.svc.cluster.local:5672"
         - name: RUST_LOG
           value: "info"
         resources:
