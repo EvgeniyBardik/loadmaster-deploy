@@ -39,9 +39,7 @@ services:
 
   # NestJS Backend API
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    image: ghcr.io/evgeniybardik/loadmaster-api:latest
     container_name: loadmaster-backend
     environment:
       PORT: 4000
@@ -74,9 +72,7 @@ services:
 
   # NextJS Frontend
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
+    image: ghcr.io/evgeniybardik/loadmaster-web:latest
     container_name: loadmaster-frontend
     environment:
       NEXT_PUBLIC_API_URL: http://localhost:4000/graphql
@@ -89,9 +85,7 @@ services:
 
   # Rust Worker (can scale horizontally)
   worker:
-    build:
-      context: ./worker
-      dockerfile: Dockerfile
+    image: ghcr.io/evgeniybardik/loadmaster-worker:latest
     container_name: loadmaster-worker-1
     environment:
       RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
