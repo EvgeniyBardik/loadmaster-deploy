@@ -26,22 +26,33 @@ jobs:
             echo "tag=latest" >> $GITHUB_OUTPUT
           fi
       
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          version: 'latest'
       
-      - name: Pull Docker image
+      - name: Configure kubectl
         run: |
-          docker pull ghcr.io/evgeniybardik/loadmaster-web:${{ steps.image_tag.outputs.tag }} || \
-          docker pull ghcr.io/evgeniybardik/loadmaster-web:latest
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" > ~/.kube/config
+          chmod 600 ~/.kube/config
       
-      - name: Tag image for local use
+      - name: Set image tag
+        id: final_tag
         run: |
-          docker tag ghcr.io/evgeniybardik/loadmaster-web:${{ steps.image_tag.outputs.tag }} loadmaster-web:latest || \
-          docker tag ghcr.io/evgeniybardik/loadmaster-web:latest loadmaster-web:latest
+          TAG="${{ steps.image_tag.outputs.tag }}"
+          if [ "$TAG" == "latest" ]; then
+            echo "image=ghcr.io/evgeniybardik/loadmaster-web:latest" >> $GITHUB_OUTPUT
+          else
+            echo "image=ghcr.io/evgeniybardik/loadmaster-web:$TAG" >> $GITHUB_OUTPUT
+          fi
       
-      # Add deployment steps here
-      # Example: kubectl set image deployment/frontend frontend=ghcr.io/evgeniybardik/loadmaster-web:${{ steps.image_tag.outputs.tag }}
+      - name: Update frontend deployment
+        run: |
+          kubectl set image deployment/frontend frontend=${{ steps.final_tag.outputs.image }} -n loadmaster
+          kubectl rollout status deployment/frontend -n loadmaster --timeout=5m
+      
+      - name: Verify deployment
+        run: |
+          kubectl get pods -n loadmaster -l app=frontend
+          kubectl get svc -n loadmaster
