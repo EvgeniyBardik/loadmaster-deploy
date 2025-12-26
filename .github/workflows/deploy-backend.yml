@@ -59,3 +59,11 @@ jobs:
         run: |
           kubectl get pods -n loadmaster -l app=backend
           kubectl get svc -n loadmaster
+      
+      - name: Cleanup old pods
+        run: |
+          # Удаляем завершенные поды
+          kubectl delete pods -n loadmaster -l app=backend --field-selector=status.phase==Succeeded --grace-period=0 || true
+          
+          # Удаляем failed поды старше 1 дня (kubectl автоматически удаляет старые)
+          kubectl delete pods -n loadmaster -l app=backend --field-selector=status.phase==Failed --grace-period=0 || true

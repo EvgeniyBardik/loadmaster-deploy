@@ -59,3 +59,8 @@ jobs:
         run: |
           kubectl get pods -n loadmaster -l app=worker
           kubectl get svc -n loadmaster
+      
+      - name: Cleanup old pods
+        run: |
+          kubectl delete pods -n loadmaster -l app=worker --field-selector=status.phase==Succeeded --grace-period=0 || true
+          kubectl delete pods -n loadmaster -l app=worker --field-selector=status.phase==Failed --grace-period=0 || true

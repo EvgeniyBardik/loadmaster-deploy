@@ -1,0 +1,51 @@
+# Настройка garbage collection для образов в k3s
+# Применяется автоматически при установке k3s
+# Можно настроить через параметры запуска k3s:
+# --kubelet-arg=image-gc-high-threshold=85
+# --kubelet-arg=image-gc-low-threshold=80
+
+# Для применения настроек на существующем кластере:
+# 1. Отредактируйте /etc/rancher/k3s/config.yaml на сервере
+# 2. Добавьте:
+# kubelet-arg:
+#   - "image-gc-high-threshold=85"
+#   - "image-gc-low-threshold=80"
+# 3. Перезапустите k3s: systemctl restart k3s
+
+# Или создайте DaemonSet для cleanup (альтернативный вариант)
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: image-cleanup
+  namespace: kube-system
+spec:
+  selector:
+    matchLabels:
+      app: image-cleanup
+  template:
+    metadata:
+      labels:
+        app: image-cleanup
+    spec:
+      containers:
+      - name: cleanup
+        image: docker:cli
+        command:
+        - sh
+        - -c
+        - |
+          while true; do
+            # Удаляем неиспользуемые образы старше 7 дней
+            docker image prune -a -f --filter "until=168h"
+            sleep 86400  # Проверяем раз в день
+          done
+        volumeMounts:
+        - name: docker-sock
+          mountPath: /var/run/docker.sock
+      volumes:
+      - name: docker-sock
+        hostPath:
+          path: /var/run/docker.sock
+      tolerations:
+      - operator: Exists
+

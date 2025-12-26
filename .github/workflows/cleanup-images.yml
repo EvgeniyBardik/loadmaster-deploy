@@ -1,0 +1,42 @@
+name: Cleanup Old Images
+
+on:
+  schedule:
+    # Запускается каждый день в 2:00 UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  cleanup-ghcr:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Cleanup old backend images
+        uses: actions/delete-package-versions@v4
+        with:
+          package-name: loadmaster-api
+          package-type: container
+          owner: evgeniybardik
+          min-versions-to-keep: 10
+          delete-only-untagged-versions: false
+      
+      - name: Cleanup old frontend images
+        uses: actions/delete-package-versions@v4
+        with:
+          package-name: loadmaster-web
+          package-type: container
+          owner: evgeniybardik
+          min-versions-to-keep: 10
+          delete-only-untagged-versions: false
+      
+      - name: Cleanup old worker images
+        uses: actions/delete-package-versions@v4
+        with:
+          package-name: loadmaster-worker
+          package-type: container
+          owner: evgeniybardik
+          min-versions-to-keep: 10
+          delete-only-untagged-versions: false
+
