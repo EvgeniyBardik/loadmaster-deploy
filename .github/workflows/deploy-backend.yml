@@ -22,6 +22,13 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             echo "tag=${{ github.event.inputs.image_tag }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" == "repository_dispatch" ]; then
+            SHA="${{ github.event.client_payload.short_sha }}"
+            if [ -n "$SHA" ]; then
+              echo "tag=$SHA" >> $GITHUB_OUTPUT
+            else
+              echo "tag=latest" >> $GITHUB_OUTPUT
+            fi
           else
             echo "tag=latest" >> $GITHUB_OUTPUT
           fi
@@ -37,19 +44,15 @@ jobs:
           echo "${{ secrets.KUBE_CONFIG }}" > ~/.kube/config
           chmod 600 ~/.kube/config
       
-      - name: Set image tag
-        id: final_tag
+      - name: Set final image
+        id: final_image
         run: |
           TAG="${{ steps.image_tag.outputs.tag }}"
-          if [ "$TAG" == "latest" ]; then
-            echo "image=ghcr.io/evgeniybardik/loadmaster-api:latest" >> $GITHUB_OUTPUT
-          else
-            echo "image=ghcr.io/evgeniybardik/loadmaster-api:$TAG" >> $GITHUB_OUTPUT
-          fi
+          echo "image=ghcr.io/evgeniybardik/loadmaster-api:$TAG" >> $GITHUB_OUTPUT
       
       - name: Update backend deployment
         run: |
-          kubectl set image deployment/backend backend=${{ steps.final_tag.outputs.image }} -n loadmaster
+          kubectl set image deployment/backend backend=${{ steps.final_image.outputs.image }} -n loadmaster
           kubectl rollout status deployment/backend -n loadmaster --timeout=5m
       
       - name: Verify deployment
