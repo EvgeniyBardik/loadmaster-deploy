@@ -13,7 +13,7 @@ jobs:
       - uses: actions/checkout@v3
       
       - name: Clone Frontend
-        run: git clone https://github.com/YOUR_USERNAME/loadmaster-web.git
+        run: git clone https://github.com/EvgeniyBardik/loadmaster-web.git
       
       - name: Setup Node.js
         uses: actions/setup-node@v3
